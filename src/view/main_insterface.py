@@ -12,14 +12,19 @@ class MainWindow(FluentWindow):
 
     def _init_window(self):
         self.setWindowTitle("语音助手")
-        self.setWindowIcon(FLI.MICROPHONE)
-        self.resize(800, 600)
+        # self.setWindowIcon(FLI.MICROPHONE)
+        
         
         # 移动到屏幕中心
         desktop = QApplication.screens()[0].availableGeometry()
         w, h = desktop.width(), desktop.height()
         self.move(w//2 - self.width()//2, h//2 - self.height()//2)
         QApplication.processEvents()
+        
+        self._init_subinsterface()
+        self.add_subinsterfaces()
+        
+        self.resize(1000, 800)
     def _init_subinsterface(self):
         self.recongnize_interface = SpeechRecInterface(self)
         self.setting_interface = SettingInterface(self)

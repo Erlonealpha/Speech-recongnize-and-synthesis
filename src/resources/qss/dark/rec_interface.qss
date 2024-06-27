@@ -1,0 +1,10 @@
+#controlPanel {
+    background-color: rgb(66, 66, 66);
+    padding: 8px;
+    border: 1px solid rgb(26, 26, 26);
+    border-radius: 8px;
+}
+
+.ButtonInterface .PushButton {
+    border-radius: 4px;
+}
