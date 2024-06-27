@@ -2,8 +2,8 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QWidget, QStackedWidget, QVBoxLayout, QLabel
 
 from qfluentwidgets import Pivot, FluentWindow, FluentIcon as FLI
-from .recongnize_insterface import SpeechRecInterface
-from .setting_insterface import SettingInterface
+from .recongnize_interface import SpeechRecInterface
+from .setting_interface import SettingInterface
 
 class MainWindow(FluentWindow):
     def __init__(self):
