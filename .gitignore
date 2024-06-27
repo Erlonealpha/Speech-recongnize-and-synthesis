@@ -5,4 +5,6 @@ build
 
 *.py[cod]
 
-test.py
+test*.py
+
+__pycache__
