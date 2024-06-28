@@ -6,5 +6,8 @@ build
 *.py[cod]
 
 test*.py
+*.wav
 
 __pycache__
+records
+config/*
