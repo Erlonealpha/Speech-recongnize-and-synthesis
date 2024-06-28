@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt, QUrl, QPropertyAnimation, QRect, Signal, Slot
-from PySide6.QtWidgets import QWidget, QFrame, QVBoxLayout, QGridLayout, QHBoxLayout, QTableWidgetItem
+from PySide6.QtWidgets import QWidget, QFrame, QVBoxLayout, QGridLayout, QHBoxLayout, QTableWidgetItem, QFileDialog
 # from PySide6.QtGui import QPalette, QColor
 
 from qfluentwidgets import  BodyLabel, PushButton, ScrollArea, ComboBox, StrongBodyLabel, CheckBox, \
@@ -205,6 +205,7 @@ class SynthsisInterface(QWidget):
         if self.is_synthesis:
             self.error_message(self.tr("错误"), self.tr("正在合成语音，请等待"))
             return
+        text = self.text_input.text_edit.toPlainText()
         if text == '':
             self.warning_message(self.tr("警告"), self.tr("请输入文本"))
             return
@@ -213,8 +214,8 @@ class SynthsisInterface(QWidget):
         
         model = self.get_model_select()
         voice = self.get_voice_select()
-        text = self.text_input.text_edit.toPlainText()
-        SpeechRecognition.tts(text, voice, callback)
+        
+        SpeechRecognition.tts(text, model, voice, callback, folder=self.save_folder)
     
     def load_audio(self, audio_path):
         self.now_audio_path = audio_path
@@ -241,7 +242,7 @@ class SynthsisInterface(QWidget):
             self.subplayer.show()
         
     def select_save_path(self):
-        ...
+        self.save_folder = QFileDialog.getExistingDirectory(self, self.tr("选择保存音频文件路径"), "./", QFileDialog.ShowDirsOnly)
     
     def show_table(self):
         model = self.get_model_select()

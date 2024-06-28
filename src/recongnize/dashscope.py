@@ -5,9 +5,10 @@ from dashscope.audio.tts import ResultCallback, SpeechSynthesizer, SpeechSynthes
 
 from os.path import join as _join
 from datetime import datetime
+from components.globals import Globals
 
-api_key = load(open('env.json', 'r')).get('dashscope-api-key')
-dashscope.api_key = api_key
+api_name = Globals.synth_models.get("ali-dashscope").get("token")
+dashscope.api_key = api_name
 
 class Callback(ResultCallback):
     def __init__(self, callback, path=None, folder=None):
@@ -44,7 +45,7 @@ class Callback(ResultCallback):
 
 class SpeechSynth:
     @staticmethod
-    def call(text, callback, sample_rate=48000, model='sambert-zhiwei-v1'):
+    def call(text, callback, sample_rate=48000, model='sambert-zhiwei-v1', folder=None):
         '''
         callback parame: path:str, time_stamps:list'''
         callback = Callback(callback)
@@ -52,5 +53,6 @@ class SpeechSynth:
                                text=text,
                                sample_rate=sample_rate,
                                callback=callback,
+                               folder=folder,
                                word_timestamp_enabled=True,
                                phoneme_timestamp_enabled=True)

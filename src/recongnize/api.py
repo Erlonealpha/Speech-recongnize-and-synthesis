@@ -21,10 +21,10 @@ class SpeechRecognition:
                 return ali_dashscope_asr_stream(callback)
 
     @staticmethod
-    def tts(text, api_name, callback):
+    def tts(text, api_name, model_name, callback, folder):
         match api_name:
             case 'ali-dashscope':
-                return ali_dashscope_synth(text, callback)
+                return ali_dashscope_synth(text, callback, folder, model_name)
             
 def aip_asr(file_path, callback):
     info = Globals.rec_models.get('baidu-aip')
@@ -32,9 +32,9 @@ def aip_asr(file_path, callback):
     aip.asr(file_path, callback)
 def ali_dashscope_asr(file_path, callback):
     ...
-    
+
 def ali_dashscope_asr_stream(callback):
     ...
 
-def ali_dashscope_synth(text, callback):
-    SpeechSynth.call(text, callback)
+def ali_dashscope_synth(text, callback, folder, model_name):
+    SpeechSynth.call(text, callback, model = model_name, folder=folder)
