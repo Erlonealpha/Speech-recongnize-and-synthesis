@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QApplication, QWidget, QStackedWidget, QVBoxLayout
 
 from qfluentwidgets import Pivot, FluentWindow, FluentIcon as FLI
 from .recongnize_interface import SpeechRecInterface
+from .synthsis_interface import SynthsisInterface
 from .setting_interface import SettingInterface
 
 class MainWindow(FluentWindow):
@@ -27,9 +28,11 @@ class MainWindow(FluentWindow):
         self.resize(1000, 800)
     def _init_subinsterface(self):
         self.recongnize_interface = SpeechRecInterface(self)
+        self.synthsis_interface = SynthsisInterface(self)
         self.setting_interface = SettingInterface(self)
     def add_subinsterfaces(self):
         self.addSubInterface(self.recongnize_interface, FLI.MICROPHONE, self.tr("语音识别"))
+        self.addSubInterface(self.synthsis_interface, FLI.HEADPHONE, self.tr("语音合成"))
         
         self.navigationInterface.addSeparator()
         self.addSubInterface(self.setting_interface, FLI.SETTING, self.tr("设置"), Qt.AlignmentFlag.AlignBottom)

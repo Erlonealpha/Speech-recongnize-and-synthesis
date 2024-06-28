@@ -22,6 +22,7 @@ from .overlay_interface import SubWidget
 from components.globals import Globals
 from record.record import Record
 from datetime import datetime
+from recongnize.api import SpeechRecognition
 
 class StatusBar(QFrame):
     def __init__(self, parent=None):
@@ -68,7 +69,7 @@ class TextDisplay(ScrollArea):
 
         self.vboxLayout = QVBoxLayout()
         self.text_display = BodyLabel(self)
-        self.text_display.setText(self.tr("Recognition Result"))
+        self.text_display.setText(self.tr("识别结果"))
         self.text_display.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.vboxLayout.addWidget(self.text_display)
         
@@ -148,8 +149,9 @@ class ButtonInterface(QWidget):
         self.lang_select = ComboBox(self)
         
         self.btn_save_record_path = PushButton(self.tr("选择保存录音路径"), self)
-        self.save_record = CheckBox(self.tr("保存录音"), self)
+        self.save_record = CheckBox(self.tr("保存实时录音"), self)
         self.translate_to_mainlang = CheckBox(self.tr("始终翻译成主要语言"), self)
+        self.chose_latest_record = CheckBox(self.tr("始终选择最新的录音"))
         
         self.hBoxLayout = QHBoxLayout(self)
         self.vBoxLayout = QVBoxLayout(self.tabView)
@@ -169,7 +171,7 @@ class ButtonInterface(QWidget):
         self.controlPanel.setObjectName('controlPanel')
 
     def initLayout(self):
-        self.setFixedHeight(250)
+        self.setFixedHeight(280)
         self.controlPanel.setFixedWidth(220)
         self.hBoxLayout.addWidget(self.tabView, 1)
         self.hBoxLayout.addWidget(self.controlPanel, 0, Qt.AlignRight)
@@ -189,7 +191,7 @@ class ButtonInterface(QWidget):
         self.vBoxLayout.addLayout(hl2)
         self.vBoxLayout.addLayout(hl3)
         self.vBoxLayout.addWidget(self.btn_play_record)
-        self.vBoxLayout.setContentsMargins(24, 32, 12, 32)
+        self.vBoxLayout.setContentsMargins(24, 4, 12, 32)
 
         self.panelLayout.setSpacing(8)
         self.panelLayout.setContentsMargins(14, 16, 14, 14)
@@ -203,12 +205,15 @@ class ButtonInterface(QWidget):
         self.panelLayout.addSpacing(4)
         self.panelLayout.addWidget(self.save_record)
         self.panelLayout.addWidget(self.translate_to_mainlang)
+        self.panelLayout.addWidget(self.chose_latest_record)
 
 class SubMediaPlayer(StandardMediaPlayBar):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.close_button = TransparentToolButton(FluentIcon.CLOSE, self)
         self.buttonLayout.addWidget(self.close_button)
+        
+        self.resize(self.parent().width(), 200)
 
 
 # ================================== Recognizer Interface ==================================
@@ -223,6 +228,10 @@ class SpeechRecInterface(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self._init_ui()
+        
+        self.save_record = False
+        self.translate_to_mainlang = True
+        self.chose_latest_record = False
         
         self.rec_model_inited_lst = []
         self.rec_stream_started = False
@@ -268,6 +277,7 @@ class SpeechRecInterface(QWidget):
 
         self.button_interface.save_record.stateChanged.connect(self.save_record_changed)
         self.button_interface.translate_to_mainlang.stateChanged.connect(self.translate_to_mainlang_changed)
+        self.button_interface.chose_latest_record.stateChanged.connect(self.chose_latest_record_changed)
 
     def start_rec_stream(self):
         if self.rec_stream_started:
@@ -311,6 +321,12 @@ class SpeechRecInterface(QWidget):
         model = self.button_interface.model_select.currentText()
         model_info = Globals.rec_models[model]
         
+        if model_info['type'] == 'api':
+            SpeechRecognition.asr(self.audio_file, model, self.textDisplay.text_display.setText)
+        elif model not in self.rec_model_inited_lst:
+            ...
+                    
+        
 
     def load_model(self, model_name, lang):
         self.status_bar.set_state(f"{self.tr('正在加载模型: ')} {model_name}")
@@ -322,12 +338,10 @@ class SpeechRecInterface(QWidget):
         call_delay(2, callback)
 
     def load_file(self):
-        file_path, _ = QFileDialog.getOpenFileName(self, self.tr("选择音频文件"), "", self.tr("音频文件 (*.wav *.mp3)"))
-        self.audio_file = file_path
+        file_path, s = QFileDialog.getOpenFileUrl(self, self.tr("选择音频文件"), "", self.tr("音频文件 (*.wav *.mp3)"))
         if file_path:
-            self.status_bar.set_now_record(Path(file_path).name)
-            if self.player is not None:
-                self.player.player.setSource(QUrl.fromLocalFile(file_path))
+            self.set_now_record_path(file_path.path())
+            
     def open_save_record_path(self):
         file_path = QFileDialog.getExistingDirectory(self, self.tr("选择保存录音路径"), "")
         if file_path:
@@ -352,17 +366,18 @@ class SpeechRecInterface(QWidget):
         if not self.record_started:
             self.warning_message(self.tr("注意"), self.tr("录音未开始"))
             return
-        self.status_bar.set_state(f"{self.tr('正在停止录音')}")
+        self.status_bar.set_state(self.tr('正在停止录音'))
         self.record_started = False
         self.record.stop()
-        self.status_bar.resume_state()
+        if self.audio_file is None or self.chose_latest_record: # 录音结束后，如果没有选择音频文件，则使用当前录音文件
+            self.set_now_record_path(self.record.save_path)
+        self.status_bar.set_state(self.tr('停止录音'))
 
-    
     def play_record(self):
         print('play_record')
         if self.subplayer is None:
             self.player = SubMediaPlayer(self) if self.subplayer is None else self.player
-            self.player.resize(self.width(), 200)
+            # self.player.resize(self.width(), 200)
             if self.audio_file is None:
                 self.warning_message(self.tr("注意"), self.tr("需要先选择音频文件"))
             else:
@@ -392,9 +407,20 @@ class SpeechRecInterface(QWidget):
             #     self.setMinimumWidth(0)
 
     def save_record_changed(self, state):
-        pass
+        self.save_record = state == Qt.CheckState.Checked
     def translate_to_mainlang_changed(self, state):
-        pass
+        self.translate_to_mainlang = state == Qt.CheckState.Checked
+    def chose_latest_record_changed(self, state):
+        self.chose_latest_record = state == Qt.CheckState.Checked
+    
+    def set_now_record_path(self, path):
+        if path[0] == '/':
+            path = path[1:]
+        self.status_bar.set_now_record(path)
+        self.audio_file = path
+        if self.player is not None:
+            self.player.player.stop()
+            self.player.player.setSource(QUrl.fromLocalFile(path))
     
     def show_loading_status(self, text, desc):
         def callback(text, desc):

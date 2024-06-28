@@ -30,6 +30,7 @@ class Record:
         self.stream.stop_stream()
         self.stream.close()
         self.audio.terminate()
+        self.record_thread.join()
     
     def record(self):
         with wave.open(self.save_path, 'wb') as wf:
